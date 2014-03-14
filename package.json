@@ -1,0 +1,15 @@
+{
+  "name": "helium",
+  "main": "./lib/helium",
+  "version": "0.0.0",
+  "description": "A short description of your package",
+  "activationEvents": ["helium:check"],
+  "repository": "https://github.com/atom/helium",
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+      "atom-message-panel": "^0.2.2"
+  }
+}

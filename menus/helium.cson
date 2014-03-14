@@ -1,0 +1,16 @@
+# See https://atom.io/docs/latest/creating-a-package#menus for more details
+'context-menu':
+  '.overlayer':
+      'Enable helium': 'helium:toggle'
+
+'menu': [
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'helium'
+      'submenu': [
+        { 'label': 'Toggle', 'command': 'helium:toggle' }
+      ]
+    ]
+  }
+]
