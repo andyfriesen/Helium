@@ -46,7 +46,7 @@ module.exports =
                 @currentRequest.onMessage
                     type: if warning? then 'warning' else 'error'
                     fileName: fileName
-                    pos: [parseInt(line, 10), parseInt(column, 10)]
+                    pos: [parseInt(line, 10) - 1, parseInt(column, 10) - 1]
                     content: @buffer.slice(1).map (s) -> s.substr(4)
 
             @buffer.splice(0)

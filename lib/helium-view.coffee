@@ -12,6 +12,7 @@ class HeliumView extends View
         @ghcModTask = ghcModTask
         @editor = null
         @editorView = null
+        @errorLines = []
         atom.workspaceView.command 'helium:check', => @check()
 
     # Returns an object that can be retrieved when package is activated
@@ -22,29 +23,41 @@ class HeliumView extends View
         @detach()
 
     check: ->
-        @editor = atom.workspace.getActiveEditor()
-        @editorView = atom.workspaceView.getActiveView()
-        fileName = @editor?.getPath()
+        editor = atom.workspace.getActiveEditor()
+        editorView = atom.workspaceView.getActiveView()
+        fileName = editor?.getPath()
 
-        if fileName? and @editor? and @editorView?
+        if fileName? and editor? and editorView?
+            @clear()
+            @editor = editor
+            @editorView = editorView
+
             AtomMessagePanel.init('GHC')
 
             @ghcModTask.run
                 onMessage: (m) => @onMessage(m)
                 fileName: fileName
 
+    clear: ->
+        AtomMessagePanel.destroy()
+        @errorLines.map (l) =>
+            @editorView.lineElementForScreenRow(l).removeClass('helium-error helium-warning')
+        @errorLines.splice(0)
+
     onMessage: (message) ->
         type = message.type
         [line, col] = message.pos
         content = message.content
 
-        range = [[line - 1, col - 1], [line - 1, @editor.lineLengthForBufferRow(line - 1)]]
+        range = [[line, col], [line, @editor.lineLengthForBufferRow(line)]]
         preview = @editor.getTextInRange(range)
 
         AtomMessagePanel.append.lineMessage(line, col, type, preview, 'helium status-notice')
         content.map (m) -> AtomMessagePanel.append.message(m, 'helium error-details')
 
-        @editorView.lineElementForScreenRow(line - 1).addClass(
+        @errorLines.push(line)
+
+        @editorView.lineElementForScreenRow(line).addClass(
             if type == 'error' then 'helium-error' else 'helium-warning'
         )
 

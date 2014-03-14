@@ -47,7 +47,7 @@ describe "GhcModTask", ->
         expect(messages.length).toBe 2
         expect(messages[0].fileName).toBe 'TinyTree.hs'
         expect(messages[0].type).toBe 'warning'
-        expect(messages[0].pos).toEqual [7, 1]
+        expect(messages[0].pos).toEqual [6, 0]
         expect(messages[0].content).toEqual ['Top-level binding with no type signature: main :: IO ()']
 
     it 'reports errors', ->
@@ -74,7 +74,7 @@ describe "GhcModTask", ->
 
         expect(messages.length).toBe 2
         expect(messages[0].type).toBe 'error'
-        expect(messages[0].pos).toEqual [8, 1]
+        expect(messages[0].pos).toEqual [7, 0]
         expect(messages[0].content[0]).toEqual "Couldn't match expected type `IO t0' with actual type `()'"
 
         expect(messages[1].content).toEqual(
