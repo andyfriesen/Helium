@@ -24,6 +24,22 @@ class HeliumView extends View
         @detach()
 
     getTypeOfThingAtCursor: ->
+        editor = atom.workspace.getActiveEditor()
+        return unless editor?
+
+        fileName = editor.getPath()
+        pos = editor.getCursor().getBufferPosition()
+        console.log 'pos', pos
+
+        gotTheFirstOne = false
+
+        @ghcModTask.getType
+            fileName: fileName
+            pos: [pos.row, pos.column]
+            onMessage: (m) =>
+                console.log "getType", m
+                return if gotTheFirstOne
+                gotTheFirstOne = true
 
 
     check: ->
