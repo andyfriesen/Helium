@@ -19,7 +19,7 @@ module.exports =
                     if matches = /([^:]+):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
                         [_, fileName, line, col, warning, content] = matches
                         type = if warning.length then 'warning' else 'error'
-                        pos = [parseInt(line, 10) - 1, parseInt(col, 10) - 1]
+                        pos = [parseInt(line, 10), parseInt(col, 10)]
 
                         content = content.split('\0').filter((l)-> 0 != l.length)
                         onMessage {type, fileName, pos, content}

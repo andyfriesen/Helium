@@ -38,9 +38,15 @@ class HeliumView extends View
             pos: [pos.row, pos.column]
             onMessage: (m) =>
                 console.log "getType", m
-                return if gotTheFirstOne
+                if !gotTheFirstOne
+                    AtomMessagePanel.init('GHC TypeInfo')
                 gotTheFirstOne = true
-
+                expr = editor.getTextInRange(
+                    [ [ m.startPos[0] - 1, m.startPos[1] - 1 ]
+                    , [ m.endPos[0] - 1, m.endPos[1] - 1]
+                    ]
+                )
+                AtomMessagePanel.append.message("<span class=\"code\">#{expr}</span><span class=\"type\">#{m.type}", "helium-typeinfo")
 
     check: ->
         editor = atom.workspace.getActiveEditor()
@@ -70,15 +76,15 @@ class HeliumView extends View
         [line, col] = message.pos
         content = message.content
 
-        range = [[line, col], [line, @editor.lineLengthForBufferRow(line)]]
+        range = [[line - 1, 0], [line - 1, @editor.lineLengthForBufferRow(line - 1)]]
         preview = @editor.getTextInRange(range)
 
         AtomMessagePanel.append.lineMessage(line, col, type, preview, 'helium status-notice')
         content.map (m) -> AtomMessagePanel.append.message(m, 'helium error-details')
 
-        @errorLines.push(line)
+        @errorLines.push(line - 1)
 
-        @editorView.lineElementForScreenRow(line).addClass(
+        @editorView.lineElementForScreenRow(line - 1).addClass(
             if type == 'error' then 'helium-error' else 'helium-warning'
         )
 
