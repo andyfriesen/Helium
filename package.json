@@ -3,7 +3,7 @@
   "main": "./lib/helium",
   "version": "0.0.0",
   "description": "A short description of your package",
-  "activationEvents": ["helium:check"],
+  "activationEvents": ["helium:check", "helium:get-type"],
   "repository": "https://github.com/atom/helium",
   "license": "MIT",
   "engines": {

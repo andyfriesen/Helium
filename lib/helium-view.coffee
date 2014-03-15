@@ -14,6 +14,7 @@ class HeliumView extends View
         @editorView = null
         @errorLines = []
         atom.workspaceView.command 'helium:check', => @check()
+        atom.workspaceView.command 'helium:get-type', => @getTypeOfThingAtCursor()
 
     # Returns an object that can be retrieved when package is activated
     serialize: ->
@@ -21,6 +22,9 @@ class HeliumView extends View
     # Tear down any state and detach
     destroy: ->
         @detach()
+
+    getTypeOfThingAtCursor: ->
+
 
     check: ->
         editor = atom.workspace.getActiveEditor()
@@ -34,7 +38,7 @@ class HeliumView extends View
 
             AtomMessagePanel.init('GHC')
 
-            @ghcModTask.run
+            @ghcModTask.check
                 onMessage: (m) => @onMessage(m)
                 fileName: fileName
 
@@ -45,6 +49,7 @@ class HeliumView extends View
         @errorLines.splice(0)
 
     onMessage: (message) ->
+        console.log "onMessage", message
         type = message.type
         [line, col] = message.pos
         content = message.content
