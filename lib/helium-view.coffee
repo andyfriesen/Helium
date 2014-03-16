@@ -13,8 +13,10 @@ class HeliumView extends View
         @editor = null
         @editorView = null
         @errorLines = []
+        @markers = []
         atom.workspaceView.command 'helium:check', => @check()
         atom.workspaceView.command 'helium:get-type', => @getTypeOfThingAtCursor()
+        atom.workspaceView.command 'helium:insert-type', => @insertType()
 
     # Returns an object that can be retrieved when package is activated
     serialize: ->
@@ -22,6 +24,49 @@ class HeliumView extends View
     # Tear down any state and detach
     destroy: ->
         @detach()
+
+    insertType: ->
+        editor = atom.workspace.getActiveEditor()
+        return unless editor?
+
+        fileName = editor.getPath()
+        cursor = editor.getCursor()
+        pos = cursor.getBufferPosition()
+
+        gotFirst = false
+
+        @ghcModTask.getType
+            fileName: fileName
+            pos: [pos.row, pos.column]
+            onMessage: (m) =>
+                return if gotFirst
+                gotFirst = true
+
+                line = editor.getTextInRange(
+                    [[pos.row, 0], [pos.row, editor.lineLengthForBufferRow(pos.row)]]
+                )
+
+                if matches = /^( *)(\w+) *=(.*)$/.exec(line)
+                    editor.transact ->
+                        cursor.setBufferPosition([pos.row, 0])
+                        [_, leadingWhitespace, symbolName, definition] = matches
+                        newLine = "#{leadingWhitespace}#{symbolName} :: #{m.type}"
+                        editor.insertText(newLine)
+                        editor.insertNewline()
+                        cursor.setBufferPosition([pos.row + 1, pos.col])
+                else if matches = /^( *)(let|where)( +)(\w+)(.*)$/.exec(line)
+                    editor.transact ->
+                        cursor.setBufferPosition([pos.row, 0])
+                        [_, leadingWhitespace, keyword, moreWhitespace, symbolName, definition] = matches
+                        spaces = if keyword == 'let' then '   ' else '     '
+                        newLine = "#{leadingWhitespace}#{keyword}#{moreWhitespace}#{symbolName} :: #{m.type}"
+                        secondLine = "#{leadingWhitespace}#{spaces}#{moreWhitespace}#{symbolName}#{definition}"
+                        editor.insertText(newLine)
+                        editor.insertNewline()
+                        editor.insertText(secondLine)
+                        editor.insertNewline()
+                        editor.deleteLine()
+                        cursor.setBufferPosition([pos.row + 1, pos.col])
 
     getTypeOfThingAtCursor: ->
         editor = atom.workspace.getActiveEditor()

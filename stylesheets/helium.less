@@ -4,6 +4,9 @@
 // for a full listing of what's available.
 @import "ui-variables";
 
+@helium-color-warning: multiply(@background-color-warning, #888);
+@helium-color-error: multiply(@background-color-error, #888);
+
 .helium {
 }
 
@@ -13,11 +16,11 @@
 }
 
 .helium-warning {
-    background-color: yellow;
+    background-color: @helium-color-warning;
 }
 
 .helium-error {
-    background-color: darkred;
+    background-color: @helium-color-error;
 }
 
 .helium-typeinfo {
