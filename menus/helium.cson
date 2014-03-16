@@ -1,7 +1,8 @@
 # See https://atom.io/docs/latest/creating-a-package#menus for more details
 'context-menu':
   '.overlayer':
-      'Enable helium': 'helium:toggle'
+      'Check': 'helium:check'
+      'Get Type': 'helium:get-type'
 
 'menu': [
   {
@@ -9,7 +10,8 @@
     'submenu': [
       'label': 'helium'
       'submenu': [
-        { 'label': 'Toggle', 'command': 'helium:toggle' }
+        { 'label': 'Check', 'command': 'helium:check' },
+        { 'label': 'Get Type', 'command': 'helium-get-type' }
       ]
     ]
   }

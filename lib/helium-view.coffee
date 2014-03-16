@@ -39,6 +39,7 @@ class HeliumView extends View
             onMessage: (m) =>
                 console.log "getType", m
                 if !gotTheFirstOne
+                    AtomMessagePanel.destroy()
                     AtomMessagePanel.init('GHC TypeInfo')
                 gotTheFirstOne = true
                 expr = editor.getTextInRange(
