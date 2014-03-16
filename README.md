@@ -2,13 +2,18 @@
 
 Happy Haskell Hacking With [Atom](http://atom.io)
 
-![A screenshot of your spankin' package](helium.png)
+Helium is a tiny plugin that connects Atom to [ghc-mod](https://github.com/kazu-yamamoto/ghc-mod).
+ghc-mod can check syntax, inspect the types of sub expressions and a bunch of
+other things.  It's great.
 
-So far, about all this package does is to provide a 'check' command that
-runs ghc against your code.  My eventual goal is to do this automatically in the
-background, provide hotkeys for doing type lookups and navigating errors, and
-to provide source-aware indexing of Haskell applications.
+Helium can show you errors in your code:
+
+![Compiler feedback](img/helium.png)
+
+It can also fill in type annotations sometimes:
+
+![Insert Type](img/helium-demo.gif)
 
 # Status
 
-This project is like 4 hours in.  Don't hold your breath. :D
+This project is only about ~~4~~ 12 hours in.  Beware: thar be dragons. :D
