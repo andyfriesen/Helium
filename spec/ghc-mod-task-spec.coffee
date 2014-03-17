@@ -8,6 +8,19 @@ class FakeBufferedProcess
         @exit = exit
         FakeBufferedProcess.allInstances.push(this)
 
+class FakeFile
+
+class FakeTemp
+    @openSync: ({dir, suffix}) ->
+        fakefd = {}
+
+        return {fd: fakefd, path: 'goobl'}
+
+class FakeFs
+    @writeSync: () ->
+    @closeSync: () ->
+    @unlinkSync: () ->
+
 describe "GhcModTask", ->
     messages = []
 
@@ -20,6 +33,8 @@ describe "GhcModTask", ->
 
     task = new GhcModTask
         bp: FakeBufferedProcess
+        fsmodule: FakeFs
+        tempmodule: FakeTemp
 
     describe "check", ->
         process = null
@@ -27,6 +42,7 @@ describe "GhcModTask", ->
             task.check
                 onMessage: onMessage
                 fileName: 'TinyTree.hs'
+                sourceCode: 'blah'
 
             [process] = FakeBufferedProcess.allInstances
 
@@ -40,7 +56,7 @@ describe "GhcModTask", ->
             expect(messages.length).toBe 1
             expect(messages[0].fileName).toBe 'TinyTree.hs'
             expect(messages[0].type).toBe 'warning'
-            expect(messages[0].pos).toEqual [8, 27]
+            expect(messages[0].pos).toEqual [9, 28]
             expect(messages[0].content).toEqual(
                 [ "Defaulting the following constraint(s) to type `Integer'"
                 , "  (Num a0) arising from the literal `1' at TinyTree.hs:9:28"
@@ -59,7 +75,7 @@ describe "GhcModTask", ->
 
             expect(messages.length).toBe 1
             expect(messages[0].type).toBe 'error'
-            expect(messages[0].pos).toEqual [11, 4]
+            expect(messages[0].pos).toEqual [12, 5]
 
             expect(messages[0].content).toEqual(
                 [ "Couldn't match expected type `()' with actual type `IO ()'"
@@ -82,6 +98,7 @@ describe "GhcModTask", ->
             task.getType
                 onMessage: onMessage
                 fileName: 'TinyTree.hs'
+                sourceCode: 'fakey'
                 pos: [9, 9]
 
             [process] = FakeBufferedProcess.allInstances

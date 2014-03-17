@@ -37,6 +37,7 @@ class HeliumView extends View
 
         @ghcModTask.getType
             fileName: fileName
+            sourceCode: editor.getText()
             pos: [pos.row, pos.column]
             onMessage: (m) =>
                 return if gotFirst
@@ -74,15 +75,14 @@ class HeliumView extends View
 
         fileName = editor.getPath()
         pos = editor.getCursor().getBufferPosition()
-        console.log 'pos', pos
 
         gotTheFirstOne = false
 
         @ghcModTask.getType
             fileName: fileName
+            sourceCode: editor.getText()
             pos: [pos.row, pos.column]
             onMessage: (m) =>
-                console.log "getType", m
                 if !gotTheFirstOne
                     AtomMessagePanel.destroy()
                     AtomMessagePanel.init('GHC TypeInfo')
@@ -109,6 +109,7 @@ class HeliumView extends View
             @ghcModTask.check
                 onMessage: (m) => @onMessage(m)
                 fileName: fileName
+                sourceCode: editor.getText()
 
     clear: ->
         AtomMessagePanel.destroy()
