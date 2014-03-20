@@ -1,16 +1,20 @@
 {
   "name": "helium",
   "main": "./lib/helium",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Intelligent Haskell Hacking",
-  "activationEvents": ["helium:check", "helium:get-type", "helium:insert-type"],
+  "activationEvents": [
+    "helium:check",
+    "helium:get-type",
+    "helium:insert-type"
+  ],
   "repository": "https://github.com/andyfriesen/helium",
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"
   },
   "dependencies": {
-      "atom-message-panel": "^0.3.0",
-      "temp": "^0.7.0"
+    "atom-message-panel": "^0.3.0",
+    "temp": "^0.7.0"
   }
 }
