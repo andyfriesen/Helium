@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "Intelligent Haskell Hacking",
   "activationEvents": ["helium:check", "helium:get-type", "helium:insert-type"],
-  "repository": "https://github.com/atom/helium",
+  "repository": "https://github.com/andyfriesen/helium",
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"
