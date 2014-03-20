@@ -2,7 +2,7 @@
   "name": "helium",
   "main": "./lib/helium",
   "version": "0.0.0",
-  "description": "A short description of your package",
+  "description": "Intelligent Haskell Hacking",
   "activationEvents": ["helium:check", "helium:get-type", "helium:insert-type"],
   "repository": "https://github.com/atom/helium",
   "license": "MIT",
