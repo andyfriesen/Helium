@@ -5,6 +5,32 @@
 
 isWhite = (ch) -> ch == ' ' or ch == '\t' or ch == '\n' or ch == '\r'
 
+isDigit = (ch) ->
+    c = ch.charCodeAt(0)
+    return 48 <= c <= 57
+
+# FIXME: Unicode.
+
+isAlpha = (ch) ->
+    c = ch.charCodeAt(0)
+    return (c == 95) || (65 <= c <= 90) || (97 <= c <= 122)
+
+isAlphaNum = (ch) -> isAlpha(ch) || isDigit(ch)
+
+isIdentifier = (s) -> /[a-z][a-zA-Z0-9]*/.exec(s)
+
+isModuleName = (s) -> /[A-Z][a-zA-Z0-9]*/.exec(s)
+
+OPERATORS = [
+    '(',
+    ')',
+    '..',
+    ','
+]
+
+isOperator = (s)-> -1 != OPERATORS.indexOf(s)
+
+module.exports =
 class Parser
     constructor: (@pos, @sourceCode) ->
         @line = 0
@@ -13,8 +39,11 @@ class Parser
     eof: ->
         @pos >= @sourceCode.length
 
+    peek: (count=1) ->
+        return @sourceCode.substr(@pos, count)
+
     next: (i=1) ->
-        while i
+        while i > 0
             return if @eof()
 
             i -= 1
@@ -27,73 +56,122 @@ class Parser
 
             @pos += 1
 
-    skipWhitespace: () ->
-        console.log 'skipWhite', [@sourceCode.charAt(@pos)], @line, @col
-        while !@eof() && isWhite(@sourceCode.charAt(@pos))
-            @next()
-            console.log 'skipWhite', [@sourceCode.charAt(@pos)], @line, @col
-        console.log 'endskipWhite', [@sourceCode.charAt(@pos)], @line, @col
-
-    skipComments: () ->
-        return if @eof()
-
-        if @sourceCode.substr(@pos, 2) == '--'
-            pos = sourceCode.indexOf('\n', @pos)
-            @pos = if pos == -1 then @sourceCode.length else pos + 1
-            return true
-        else if @sourceCode.substr(@pos, 2) == '{-'
-            nestingLevel = 1
-            @next(2)
-            while nestingLevel > 0
-                s = @sourceCode.substr(@pos, 2)
-
-                if s == '{-'
-                    nestingLevel += 1
-                    @next(2)
-                else if s == '-}'
-                    nestingLevel -= 1
-                    @next(2)
-                else
+    eatWhitespace: ->
+        while true
+            if isWhite(@peek())
+                @next()
+                continue
+            else if '--' == @peek(2)
+                @next(2)
+                while !@eof() and '\n' != @peek()
                     @next()
-
-            return true
-        else
-            return false
-
-    match: (s) ->
-        console.log 'match', s, @sourceCode.substr(@pos, s.length)
-        if s == @sourceCode.substr(@pos, s.length)
-            @pos += s.length
-            return true
-        else
-            return false
-
-    matchWord: (s) ->
-        startPos = @pos
-        while /[a-zA-Z0-9\.]/.match(@sourceCode.substr(@pos, 1))
-            @next()
-        return @sourceCode.substr(startPos, @pos)
-
-    nextToken: ->
-        @skipComments()
-
-    skipPastModule: ->
-        @skipWhitespace()
-        r = @skipComments()
-        @skipWhitespace()
-
-        if @match('module ')
-            name = @matchWord
-            if @match(' where')
-                @skipWhitespace()
+                continue
+            else if '{-' == @peek(2)
+                @next(2)
+                nestLevel = 1
+                while !@eof() and nestLevel > 0
+                    s = @peek(2)
+                    if s == '{-'
+                        nestLevel += 1
+                        @next(2)
+                    else if s == '-}'
+                        nestLevel -= 1
+                        @next(2)
+                    else
+                        @next()
+                continue
+            else
                 return
 
-module.exports =
+    nextToken: ->
+        @eatWhitespace()
+        if @eof()
+            return null
 
-    # Yields the beginning of a line where an import statement can be inserted.
-    # Need to skip comments and the module X (...) where declaration.
-    # If there is no module statement at the beginning, then it's the beginning of the file.
-    getPositionOfFirstImport: (sourceCode) ->
-        p = new Parser(0, sourceCode)
-        p.skipPastModule()
-        return [p.line, p.col]
+        if isAlpha(@peek())
+            start = @pos
+            while true
+                @next()
+                if not isAlpha(@peek())
+                    break
+
+            return @sourceCode.substring(start, @pos)
+
+        for op in OPERATORS
+            if op == @peek(op.length)
+                @next(op.length)
+                return op
+
+    moduleName: ->
+        startPos = @pos
+        fail = =>
+            @pos = startPos
+            return null
+
+        segment = @nextToken()
+        if not isModuleName(segment)
+            return fail()
+
+        segments = [segment]
+        p = @pos
+        while true
+            if @nextToken() != '.'
+                @pos = p
+                return segments.join('.')
+
+            segment = @nextToken()
+            if not isModuleName(segment)
+                return fail
+
+            segments.push(segment)
+
+    moduleDecl: ->
+        startPos = @pos
+        fail = =>
+            @pos = startPos
+            return null
+
+        if @nextToken() != 'module'
+            return fail()
+
+        name = @moduleName()
+        if name == null
+            return fail()
+
+        t = @nextToken()
+        if t == 'where'
+            return {moduleName: name, exports: []}
+
+        else if t == '('
+            exportList = []
+            p = @pos
+            t = @nextToken()
+            if t == ')'
+                t = @nextToken()
+                if t != 'where'
+                    return fail()
+
+                return { moduleName: name, exports: exportList }
+            else
+                @pos = p
+
+            while true
+                t = @nextToken()
+                if isIdentifier(t)
+                    exportList.push(t)
+
+                    t = @nextToken()
+                    if t == ','
+                        continue
+                    else if t == ')'
+                        t = @nextToken()
+                        if t != 'where'
+                            return fail()
+                        return { moduleName: name, exports: exportList }
+                    else
+                        return fail()
+                else
+                    return fail()
+
+        else
+            return fail()

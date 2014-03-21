@@ -1,18 +1,44 @@
-parse = require '../lib/parse'
+Parser = require '../lib/parse'
 
-describe 'parse', ->
-    it 'says that imports can go at the beginning of an empty Haskell source file', ->
-        pos = parse.getPositionOfFirstImport ''
-        expect(pos).toEqual([0, 0])
+parseWith = (src) ->
+    new Parser(0, src)
 
-    it 'puts imports after compiler directives', ->
-        pos = parse.getPositionOfFirstImport '{-#LANGUAGE OverloadedStrings #-}\n'
-        expect(pos).toEqual([1, 0])
+describe 'nextToken', ->
+    it 'fetches the first token', ->
+        p = parseWith '   module   '
+        expect(p.nextToken()).toEqual 'module'
 
-    it 'skips nested comments too', ->
-        pos = parse.getPositionOfFirstImport '{- haskell comments are not lame like C comments {- you can nest}}-} them -}\n'
-        expect(pos).toEqual([1, 0])
+    it 'fetches a second token', ->
+        p = parseWith '  module\n module   '
+        expect(p.nextToken()).toEqual 'module'
+        expect(p.nextToken()).toEqual 'module'
 
-    fit 'skips the where clause', ->
-        pos = parse.getPositionOfFirstImport '{#- LANGUAGE OverloadedStrings #-}\nmodule Main where\n\nfoo = 99\n'
-        expect(pos).toEqual([2, 0])
+    it 'skips a line comment', ->
+        p = parseWith ' -- comment goes here\nmodule'
+        expect(p.nextToken()).toEqual 'module'
+
+    it 'skips a block comment', ->
+        p = parseWith ' {- comment goes here -} \tmodule'
+        expect(p.nextToken()).toEqual 'module'
+
+    it 'skips a nested block comment', ->
+        p = parseWith ' {- block { comments {- are -} the best -} module'
+        expect(p.nextToken()).toEqual 'module'
+
+    it 'skips multiple comments', ->
+        p = parseWith '-- first line\n--second line\r\nmodule'
+        expect(p.nextToken()).toEqual 'module'
+
+describe 'moduleDecl', ->
+    it 'parses a basic module declaration', ->
+        p = parseWith 'module Main where\n'
+        expect(p.moduleDecl()).toEqual {moduleName: 'Main', exports: []}
+
+    it 'fails', ->
+        p = parseWith ' -- la la la\nfoo = 22'
+        expect(p.moduleDecl()).toEqual null
+        expect(p.pos).toBe 0
+
+    it 'parses a basic export list', ->
+        p = parseWith 'module Foo (x, y, z) where'
+        expect(p.moduleDecl()).toEqual { moduleName: 'Foo', exports: ['x', 'y', 'z']}
