@@ -1,15 +1,22 @@
 HeliumView = require './helium-view'
+ImportView = require './import-view'
 GhcModTask = require './ghc-mod-task'
+ViewManager = require './view-manager'
 
 module.exports =
-  heliumView: null
+    heliumView: null
+    importViewManager: []
 
-  activate: (state) ->
-      @ghcModTask = new GhcModTask({})
-      @heliumView = new HeliumView(state.heliumViewState, @ghcModTask)
+    activate: (state) ->
+        @ghcModTask = new GhcModTask({})
+        @heliumView = new HeliumView(state.heliumViewState, @ghcModTask)
 
-  deactivate: ->
-      @heliumView.destroy()
+        @importViewManager = new ViewManager (editor) => new ImportView(@ghcModTask, editor)
+        @importViewManager.activate()
 
-  serialize: ->
-      heliumViewState: @heliumView.serialize()
+    deactivate: ->
+        @heliumView.destroy()
+        @importViewManager.deactivate()
+
+    serialize: ->
+        heliumViewState: @heliumView.serialize()

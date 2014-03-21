@@ -49,6 +49,14 @@ module.exports =
                     else
                         console.warn "getType got confusing output from ghc-mod:", [line]
 
+        list: ({onMessage, onComplete}) ->
+            @run
+                command: 'list'
+                args: []
+                onMessage: (line) =>
+                    onMessage line.trim()
+                onComplete: onComplete
+
         mkTemp: (fileName, contents) ->
             dir = path.dirname(fileName)
             info = @temp.openSync({dir:dir, suffix: '.hs'})
@@ -56,7 +64,7 @@ module.exports =
             @fs.closeSync(info.fd)
             return info.path
 
-        run: ({onMessage, command, args}) ->
+        run: ({onMessage, onComplete, command, args}) ->
             cmdArgs = args.slice(0)
             cmdArgs.unshift(command)
 
@@ -71,7 +79,7 @@ module.exports =
                 args: cmdArgs
                 stdout: (line) => @stdout(onMessage, line)
                 stderr: (line) => @stdout(onMessage, line)
-                exit: => @exit()
+                exit: => @exit(onComplete)
 
             console.log "Running", bp_args
 
@@ -80,7 +88,9 @@ module.exports =
         stdout: (onMessage, line) ->
             line.split('\n').filter((l)->0 != l.length).map onMessage
 
-        exit: ->
+        exit: (onComplete) ->
+            onComplete?()
+
             @bp = null
             @queuedRequest = null
             if @tempFile?

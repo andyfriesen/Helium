@@ -2,12 +2,8 @@
 AtomMessagePanel = require 'atom-message-panel'
 
 module.exports =
-class HeliumView extends View
-    @content: ->
-        @div class: 'helium overlay from-top', =>
-            @div "The Helium package is Alive! It's ALIVE!", class: "message"
-
-    initialize: (serializeState, ghcModTask) ->
+class HeliumView
+    constructor: (serializeState, ghcModTask) ->
         #atom.workspaceView.command "helium:toggle", => @toggle()
         @ghcModTask = ghcModTask
         @editor = null
@@ -17,13 +13,6 @@ class HeliumView extends View
         atom.workspaceView.command 'helium:check', => @check()
         atom.workspaceView.command 'helium:get-type', => @getTypeOfThingAtCursor()
         atom.workspaceView.command 'helium:insert-type', => @insertType()
-
-    # Returns an object that can be retrieved when package is activated
-    serialize: ->
-
-    # Tear down any state and detach
-    destroy: ->
-        @detach()
 
     insertType: ->
         editor = atom.workspace.getActiveEditor()
@@ -134,10 +123,3 @@ class HeliumView extends View
         @editorView.lineElementForScreenRow(line - 1).addClass(
             if type == 'error' then 'helium-error' else 'helium-warning'
         )
-
-    toggle: ->
-        console.log "HeliumView was toggled!"
-        if @hasParent()
-            @detach()
-        else
-            atom.workspaceView.append(this)

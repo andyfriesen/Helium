@@ -6,7 +6,8 @@
   "activationEvents": [
     "helium:check",
     "helium:get-type",
-    "helium:insert-type"
+    "helium:insert-type",
+    "helium:insert-import"
   ],
   "repository": "https://github.com/andyfriesen/helium",
   "license": "MIT",
@@ -15,6 +16,7 @@
   },
   "dependencies": {
     "atom-message-panel": "^0.3.0",
-    "temp": "^0.7.0"
+    "temp": "^0.7.0",
+    "underscore-plus": "1.x"
   }
 }
