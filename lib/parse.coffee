@@ -32,9 +32,8 @@ isOperator = (s)-> -1 != OPERATORS.indexOf(s)
 
 module.exports =
 class Parser
-    constructor: (@pos, @sourceCode) ->
-        @line = 0
-        @col = 0
+    constructor: (@sourceCode) ->
+        @pos = @line = @col = 0
 
     eof: ->
         @pos >= @sourceCode.length
@@ -125,6 +124,39 @@ class Parser
 
             segments.push(segment)
 
+    parsePropList: ->
+        startPos = @pos
+        fail = =>
+            @pos = startPos
+            return null
+
+        t = @nextToken()
+        if t != '('
+            return fail()
+
+        p = @pos
+        t = @nextToken()
+        if t == ')'
+            return []
+        @pos = p
+
+        props = []
+        while true
+            t = @nextToken()
+            if isIdentifier(t) or t == '..'
+                props.push(t)
+                p = @pos
+                t = @nextToken()
+                if t == ')'
+                    break
+                else if t == ','
+                    continue
+                else
+                    return fail()
+
+        return props
+
+
     moduleDecl: ->
         startPos = @pos
         fail = =>
@@ -156,11 +188,24 @@ class Parser
                 @pos = p
 
             while true
-                t = @nextToken()
-                if isIdentifier(t)
-                    exportList.push(t)
-
+                tok = @nextToken()
+                if isIdentifier(tok)
+                    p = @pos
                     t = @nextToken()
+                    props = []
+
+                    if t == '('
+                        @pos = p
+                        props = @parsePropList()
+                        if null == props
+                            return fail()
+                        t = @nextToken()
+
+                    if props.length
+                        exportList.push({name: tok, props: props})
+                    else
+                        exportList.push({name: tok})
+
                     if t == ','
                         continue
                     else if t == ')'

@@ -1,7 +1,7 @@
 Parser = require '../lib/parse'
 
 parseWith = (src) ->
-    new Parser(0, src)
+    new Parser(src)
 
 describe 'nextToken', ->
     it 'fetches the first token', ->
@@ -41,4 +41,8 @@ describe 'moduleDecl', ->
 
     it 'parses a basic export list', ->
         p = parseWith 'module Foo (x, y, z) where'
-        expect(p.moduleDecl()).toEqual { moduleName: 'Foo', exports: ['x', 'y', 'z']}
+        expect(p.moduleDecl()).toEqual { moduleName: 'Foo', exports: [{name:'x'}, {name:'y'}, {name:'z'}]}
+
+    it 'parses an export list that names constructors', ->
+        p = parseWith 'module Foo (Point (x, y)) where'
+        expect(p.moduleDecl()).toEqual { moduleName: 'Foo', exports: [{name:'Point', props: ['x', 'y']}]}

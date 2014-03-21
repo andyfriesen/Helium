@@ -7,7 +7,8 @@
 
 # For more detailed documentation see
 # https://atom.io/docs/latest/advanced/keymaps
-'.workspace':
+'.editor':
   'ctrl-c ctrl-c': 'helium:check'
   'ctrl-c ctrl-t': 'helium:get-type'
   'ctrl-c ctrl-i': 'helium:insert-type'
+  'ctrl-c ctrl-p': 'helium:insert-import'

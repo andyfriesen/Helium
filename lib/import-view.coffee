@@ -1,4 +1,5 @@
-{SelectListView, $$} = require 'atom'
+{$$, Point, SelectListView} = require 'atom'
+Parser = require './parse'
 
 module.exports =
 class ImportView extends SelectListView
@@ -39,10 +40,13 @@ class ImportView extends SelectListView
         cursor = @editor.getCursor()
         pos = cursor.getBufferPosition()
 
-        cursor.setBufferPosition([0, 0]) # FIXME: This is so wrong that it is useless
+        p = new Parser(@editor.getText())
+        d = p.moduleDecl()
+
+        cursor.setBufferPosition([p.line + 1, 0])
 
         @editor.insertText("import " + item + '\n')
-        cursor.setBufferPosition([pos[0] + 1, pos[1]])
+        cursor.setBufferPosition(new Point(pos.row + 1, pos.column))
         @editor.commitTransaction()
 
     selectNextItemView: ->

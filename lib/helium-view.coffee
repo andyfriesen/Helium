@@ -1,4 +1,4 @@
-{View} = require 'atom'
+{Point, View} = require 'atom'
 AtomMessagePanel = require 'atom-message-panel'
 
 module.exports =
@@ -38,15 +38,15 @@ class HeliumView
 
                 if matches = /^( *)(\w+) *=(.*)$/.exec(line)
                     editor.transact ->
-                        cursor.setBufferPosition([pos.row, 0])
+                        cursor.setBufferPosition(new Point(pos.row, 0))
                         [_, leadingWhitespace, symbolName, definition] = matches
                         newLine = "#{leadingWhitespace}#{symbolName} :: #{m.type}"
                         editor.insertText(newLine)
                         editor.insertNewline()
-                        cursor.setBufferPosition([pos.row + 1, pos.col])
+                        cursor.setBufferPosition(new Point(pos.row + 1, pos.col))
                 else if matches = /^( *)(let|where)( +)(\w+)(.*)$/.exec(line)
                     editor.transact ->
-                        cursor.setBufferPosition([pos.row, 0])
+                        cursor.setBufferPosition(new Point(pos.row, 0))
                         [_, leadingWhitespace, keyword, moreWhitespace, symbolName, definition] = matches
                         spaces = if keyword == 'let' then '   ' else '     '
                         newLine = "#{leadingWhitespace}#{keyword}#{moreWhitespace}#{symbolName} :: #{m.type}"
@@ -56,7 +56,7 @@ class HeliumView
                         editor.insertText(secondLine)
                         editor.insertNewline()
                         editor.deleteLine()
-                        cursor.setBufferPosition([pos.row + 1, pos.col])
+                        cursor.setBufferPosition(new Point(pos.row + 1, pos.col))
 
     getTypeOfThingAtCursor: ->
         editor = atom.workspace.getActiveEditor()
