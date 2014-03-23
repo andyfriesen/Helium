@@ -43,7 +43,13 @@ class ImportView extends SelectListView
         p = new Parser(@editor.getText())
         d = p.moduleDecl()
 
-        cursor.setBufferPosition([p.line + 1, 0])
+        if d?
+            position = [p.line + 1, 0]
+        if not d?
+            p.eatWhitespace()
+            position = [p.line, 0]
+
+        cursor.setBufferPosition(position)
 
         @editor.insertText("import " + item + '\n')
         cursor.setBufferPosition(new Point(pos.row + 1, pos.column))

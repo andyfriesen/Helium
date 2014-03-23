@@ -59,7 +59,8 @@ module.exports =
 
         mkTemp: (fileName, contents) ->
             dir = path.dirname(fileName)
-            info = @temp.openSync({dir:dir, suffix: '.hs'})
+            extension = if /.*\.lhs$/.exec(fileName) then '.lhs' else '.hs'
+            info = @temp.openSync({dir:dir, suffix: extension})
             @fs.writeSync(info.fd, contents, 0, contents.length, 0)
             @fs.closeSync(info.fd)
             return info.path
