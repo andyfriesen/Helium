@@ -108,18 +108,22 @@ class HeliumView
 
     onMessage: (message) ->
         console.log "onMessage", message
-        type = message.type
+        {type, content, fileName} = message
         [line, col] = message.pos
-        content = message.content
 
-        range = [[line - 1, 0], [line - 1, @editor.lineLengthForBufferRow(line - 1)]]
-        preview = @editor.getTextInRange(range)
+        if message.fileName == @editor.getPath()
+            range = [[line - 1, 0], [line - 1, @editor.lineLengthForBufferRow(line - 1)]]
+            preview = @editor.getTextInRange(range)
 
-        AtomMessagePanel.append.lineMessage(line, col, type, preview, 'helium status-notice')
-        content.map (m) -> AtomMessagePanel.append.message(m, 'helium error-details')
+            AtomMessagePanel.append.lineMessage(line, col, type, preview, 'helium status-notice')
+            content.map (m) -> AtomMessagePanel.append.message(m, 'helium error-details')
 
-        @errorLines.push(line - 1)
+            @errorLines.push(line - 1)
 
-        @editorView.lineElementForScreenRow(line - 1).addClass(
-            if type == 'error' then 'helium-error' else 'helium-warning'
-        )
+            @editorView.lineElementForScreenRow(line - 1).addClass(
+                if type == 'error' then 'helium-error' else 'helium-warning'
+            )
+
+        else
+            AtomMessagePanel.append.message("#{line}:#{col} of #{fileName}", 'helium status-notice')
+            content.map (m) -> AtomMessagePanel.append.message(m, 'helium error-details')

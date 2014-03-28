@@ -23,14 +23,17 @@ module.exports =
             @run
                 command: 'check'
                 args: [@tempFile]
+                cwd: path.dirname(fileName)
                 onMessage: (line) =>
                     if matches = /([^:]+):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
-                        [_, fileName, line, col, warning, content] = matches
+                        [_, fn, line, col, warning, content] = matches
+                        if fn == @tempFile
+                            fn = fileName
                         type = if warning.length then 'warning' else 'error'
                         pos = [parseInt(line, 10), parseInt(col, 10)]
 
                         content = content.split('\0').filter((l)-> 0 != l.length)
-                        onMessage {type, fileName, pos, content}
+                        onMessage {type, fileName: fn, pos, content}
                     else
                         console.warn "check got confusing output from ghc-mod:", [line]
 
@@ -65,7 +68,8 @@ module.exports =
             @fs.closeSync(info.fd)
             return info.path
 
-        run: ({onMessage, onComplete, command, args}) ->
+        run: ({onMessage, onComplete, command, args, cwd}) ->
+            options = if cwd then { cwd: cwd } else {}
             cmdArgs = args.slice(0)
             cmdArgs.unshift(command)
 
@@ -78,6 +82,7 @@ module.exports =
             bp_args =
                 command: GHC_MOD_BIN
                 args: cmdArgs
+                options: options
                 stdout: (line) => @stdout(onMessage, line)
                 stderr: (line) => @stdout(onMessage, line)
                 exit: => @exit(onComplete)
