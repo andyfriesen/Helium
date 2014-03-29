@@ -46,3 +46,7 @@ describe 'moduleDecl', ->
     it 'parses an export list that names constructors', ->
         p = parseWith 'module Foo (Point (x, y)) where'
         expect(p.moduleDecl()).toEqual { moduleName: 'Foo', exports: [{name:'Point', props: ['x', 'y']}]}
+
+    it 'allows digits in module names', ->
+        p = parseWith 'module TinyTree2 where'
+        expect(p.moduleDecl()).toEqual { moduleName: 'TinyTree2', exports: []}

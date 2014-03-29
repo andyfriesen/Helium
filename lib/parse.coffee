@@ -91,7 +91,7 @@ class Parser
             start = @pos
             while true
                 @next()
-                if not isAlpha(@peek())
+                if not isAlphaNum(@peek())
                     break
 
             return @sourceCode.substring(start, @pos)

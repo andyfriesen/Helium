@@ -1,17 +1,19 @@
-{Point, View} = require 'atom'
-{MessagePanelView, PlainMessageView, LineMessageView} = require 'atom-message-panel'
+{ Point
+, View
+} = require 'atom'
+{ MessagePanelView
+, PlainMessageView
+, LineMessageView
+} = require 'atom-message-panel'
+
+Parser = require './parse'
 
 module.exports =
 class HeliumView
     constructor: (serializeState, ghcModTask) ->
         @ghcModTask = ghcModTask
         @messagePanel = null
-        @editor = null
-        @editorView = null
-        @errorLines = []
-        @markers = []
         atom.workspaceView.command 'helium:check', => @check()
-        atom.workspaceView.command 'helium:get-type', => @getTypeOfThingAtCursor()
         atom.workspaceView.command 'helium:insert-type', => @insertType()
 
     insertType: ->
@@ -57,33 +59,6 @@ class HeliumView
                         editor.insertNewline()
                         editor.deleteLine()
                         cursor.setBufferPosition(new Point(pos.row + 1, pos.col))
-
-    getTypeOfThingAtCursor: ->
-        editor = atom.workspace.getActiveEditor()
-        return unless editor?
-
-        fileName = editor.getPath()
-        pos = editor.getCursor().getBufferPosition()
-
-        gotTheFirstOne = false
-
-        @ghcModTask.getType
-            fileName: fileName
-            sourceCode: editor.getText()
-            pos: [pos.row, pos.column]
-            onMessage: (m) =>
-                if !gotTheFirstOne
-                    @messagePanel?.destroy()
-                    @messagePanel = new MessagePanelView
-                        title: 'GHC TypeInfo'
-
-                gotTheFirstOne = true
-                expr = editor.getTextInRange(
-                    [ [ m.startPos[0] - 1, m.startPos[1] - 1 ]
-                    , [ m.endPos[0] - 1, m.endPos[1] - 1]
-                    ]
-                )
-                @messagePanel.append.message("<span class=\"code\">#{expr}</span><span class=\"type\">#{m.type}", "helium-typeinfo")
 
     check: ->
         editor = atom.workspace.getActiveEditor()
@@ -139,6 +114,7 @@ class HeliumView
 
     clear: (editorView) ->
         @messagePanel?.detach()
+        @messagePanel = null
 
         editorView.find('.helium-error').removeClass('helium-error')
         editorView.find('.helium-warning').removeClass('helium-warning')

@@ -40,11 +40,11 @@ module.exports =
                     else
                         console.warn "check got confusing output from ghc-mod:", [line]
 
-        getType: ({onMessage, fileName, sourceCode, pos}) ->
+        getType: ({onMessage, fileName, moduleName, sourceCode, pos}) ->
             @tempFile = @mkTemp(fileName, sourceCode)
             @run
                 command: 'type'
-                args: [@tempFile, 'Main', pos[0] + 1, pos[1] + 1]
+                args: [@tempFile, moduleName, pos[0] + 1, pos[1] + 1]
                 onMessage: (line) =>
                     if matches = /(\d+) (\d+) (\d+) (\d+) "([^"]+)"/.exec(line)
                         [_, startLine, startCol, endLine, endCol, type] = matches
