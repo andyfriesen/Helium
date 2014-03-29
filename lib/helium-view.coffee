@@ -1,11 +1,11 @@
 {Point, View} = require 'atom'
-AtomMessagePanel = require 'atom-message-panel'
+{MessagePanelView, PlainMessageView, LineMessageView} = require 'atom-message-panel'
 
 module.exports =
 class HeliumView
     constructor: (serializeState, ghcModTask) ->
-        #atom.workspaceView.command "helium:toggle", => @toggle()
         @ghcModTask = ghcModTask
+        @messagePanel = null
         @editor = null
         @editorView = null
         @errorLines = []
@@ -73,15 +73,17 @@ class HeliumView
             pos: [pos.row, pos.column]
             onMessage: (m) =>
                 if !gotTheFirstOne
-                    AtomMessagePanel.destroy()
-                    AtomMessagePanel.init('GHC TypeInfo')
+                    @messagePanel?.destroy()
+                    @messagePanel = new MessagePanelView
+                        title: 'GHC TypeInfo'
+
                 gotTheFirstOne = true
                 expr = editor.getTextInRange(
                     [ [ m.startPos[0] - 1, m.startPos[1] - 1 ]
                     , [ m.endPos[0] - 1, m.endPos[1] - 1]
                     ]
                 )
-                AtomMessagePanel.append.message("<span class=\"code\">#{expr}</span><span class=\"type\">#{m.type}", "helium-typeinfo")
+                @messagePanel.append.message("<span class=\"code\">#{expr}</span><span class=\"type\">#{m.type}", "helium-typeinfo")
 
     check: ->
         editor = atom.workspace.getActiveEditor()
@@ -89,41 +91,45 @@ class HeliumView
         fileName = editor?.getPath()
 
         if fileName? and editor? and editorView?
-            @clear()
-            @editor = editor
-            @editorView = editorView
+            @clear(editorView)
 
-            AtomMessagePanel.init('GHC')
+            @messagePanel?.detach()
+            @messagePanel = new MessagePanelView
+                title: 'GHC'
+
+            @messagePanel.attach()
 
             @ghcModTask.check
-                onMessage: (m) => @onMessage(m)
                 fileName: fileName
                 sourceCode: editor.getText()
+                onMessage: (message) =>
+                    console.log "onMessage", message
+                    {type, content, fileName} = message
+                    [line, col] = message.pos
 
-    clear: ->
-        AtomMessagePanel.destroy()
-        @errorLines.map (l) =>
-            @editorView.lineElementForScreenRow(l).removeClass('helium-error helium-warning')
-        @errorLines.splice(0)
+                    if message.fileName == editor.getPath()
+                        range = [[line - 1, 0], [line - 1, editor.lineLengthForBufferRow(line - 1)]]
+                        preview = editor.getTextInRange(range)
 
-    onMessage: (message) ->
-        console.log "onMessage", message
-        {type, content, fileName} = message
-        [line, col] = message.pos
+                        message = type
+                        className = 'helium status-notice'
 
-        if message.fileName == @editor.getPath()
-            range = [[line - 1, 0], [line - 1, @editor.lineLengthForBufferRow(line - 1)]]
-            preview = @editor.getTextInRange(range)
+                        @messagePanel.add(
+                            new LineMessageView { line, col, message, preview, className }
+                        )
 
-            AtomMessagePanel.append.lineMessage(line, col, type, preview, 'helium status-notice')
-            content.map (m) -> AtomMessagePanel.append.message(m, 'helium error-details')
+                        content.map (m) => @messagePanel.add(new PlainMessageView { message: m, className: 'helium error-details' })
 
-            @errorLines.push(line - 1)
+                        editorView.lineElementForScreenRow(line - 1).addClass(
+                            if type == 'error' then 'helium-error' else 'helium-warning'
+                        )
 
-            @editorView.lineElementForScreenRow(line - 1).addClass(
-                if type == 'error' then 'helium-error' else 'helium-warning'
-            )
+                    else
+                        @messagePanel.append.message("#{line}:#{col} of #{fileName}", 'helium status-notice')
+                        content.map (m) -> @messagePanel.append.message(m, 'helium error-details')
 
-        else
-            AtomMessagePanel.append.message("#{line}:#{col} of #{fileName}", 'helium status-notice')
-            content.map (m) -> AtomMessagePanel.append.message(m, 'helium error-details')
+    clear: (editorView) ->
+        @messagePanel?.detach()
+
+        editorView.find('.helium-error').removeClass('helium-error')
+        editorView.find('.helium-warning').removeClass('helium-warning')

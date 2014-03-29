@@ -1,0 +1,3 @@
+[submodule "node_modules/atom-message-panel"]
+	path = node_modules/atom-message-panel
+	url = git@github.com:andyfriesen/atom-message-panel.git
