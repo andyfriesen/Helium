@@ -7,27 +7,23 @@
 , LineMessageView
 } = require 'atom-message-panel'
 
-Parser = require './parse'
-
-HeliumView = require './helium-view'
-ImportView = require './import-view'
-GhcModTask = require './ghc-mod-task'
+ImportView  = require './import-view'
+GhcModTask  = require './ghc-mod-task'
 ViewManager = require './view-manager'
 
 module.exports =
-    heliumView: null
     messagePanel: null
     importViewManager: null
 
     activate: (state) ->
         @ghcModTask = new GhcModTask({})
-        @heliumView = new HeliumView(state.heliumViewState, @ghcModTask)
 
         @importViewManager = new ViewManager (editor) => new ImportView(@ghcModTask, editor)
         @importViewManager.activate()
 
         atom.workspaceView.command 'helium:check', => @check()
         atom.workspaceView.command 'helium:get-type', => @getTypeOfThingAtCursor()
+        atom.workspaceView.command 'helium:insert-type', => @insertType()
 
     deactivate: ->
         @heliumView.destroy()
@@ -102,16 +98,10 @@ module.exports =
         fileName = editor.getPath()
         pos = editor.getCursor().getBufferPosition()
 
-        p = new Parser(editor.getText())
-        decl = p.moduleDecl()
-
-        moduleName = if decl? then decl.moduleName else 'Main'
-
         gotTheFirstOne = false
 
         @ghcModTask.getType
             fileName: fileName
-            moduleName: moduleName
             sourceCode: editor.getText()
             pos: [pos.row, pos.column]
             onMessage: (m) =>
@@ -134,3 +124,49 @@ module.exports =
                         raw: true
                         className: "helium-typeinfo"
                 )
+
+    insertType: ->
+        editor = atom.workspace.getActiveEditor()
+        return unless editor?
+
+        fileName = editor.getPath()
+        cursor = editor.getCursor()
+        pos = cursor.getBufferPosition()
+
+        gotFirst = false
+
+        @ghcModTask.getType
+            fileName: fileName
+            sourceCode: editor.getText()
+            pos: [pos.row, pos.column]
+            onMessage: (m) =>
+                return if gotFirst
+                gotFirst = true
+
+                line = editor.getTextInRange(
+                    [[pos.row, 0], [pos.row, editor.lineLengthForBufferRow(pos.row)]]
+                )
+
+                if matches = /^( *)(\w+) *=(.*)$/.exec(line)
+                    editor.transact ->
+                        cursor.setBufferPosition(new Point(pos.row, 0))
+                        [_, leadingWhitespace, symbolName, definition] = matches
+                        newLine = "#{leadingWhitespace}#{symbolName} :: #{m.type}"
+                        editor.insertText(newLine)
+                        editor.insertNewline()
+                        cursor.setBufferPosition(new Point(pos.row + 1, pos.col))
+                else if matches = /^( *)(let|where)( +)(\w+)(.*)$/.exec(line)
+                    editor.transact ->
+                        cursor.setBufferPosition(new Point(pos.row, 0))
+                        [_, leadingWhitespace, keyword, moreWhitespace, symbolName, definition] = matches
+                        console.log 'matches', [leadingWhitespace.length, keyword, moreWhitespace.length, symbolName, definition]
+                        spaces = if keyword == 'let' then '   ' else '     '
+                        newLine = "#{leadingWhitespace}#{keyword}#{moreWhitespace}#{symbolName} :: #{m.type}"
+                        secondLine = "#{leadingWhitespace}#{spaces}#{moreWhitespace}#{symbolName}#{definition}"
+                        console.log 'secondLine', {foo:secondLine}
+                        editor.insertText(newLine)
+                        editor.insertText('\n', {autoIndentNewline: false})
+                        editor.insertText(secondLine)
+                        editor.insertNewline()
+                        editor.deleteLine()
+                        cursor.setBufferPosition(new Point(pos.row + 1, pos.column))

@@ -2,6 +2,7 @@
 path              = require 'path'
 fs                = require 'fs'
 temp              = require 'temp'
+Parser            = require './parse'
 
 GHC_MOD_BIN = 'ghc-mod'
 
@@ -40,7 +41,11 @@ module.exports =
                     else
                         console.warn "check got confusing output from ghc-mod:", [line]
 
-        getType: ({onMessage, fileName, moduleName, sourceCode, pos}) ->
+        getType: ({onMessage, fileName, sourceCode, pos}) ->
+            p = new Parser(sourceCode)
+            decl = p.moduleDecl()
+            moduleName = if decl? then decl.moduleName else 'Main'
+
             @tempFile = @mkTemp(fileName, sourceCode)
             @run
                 command: 'type'
