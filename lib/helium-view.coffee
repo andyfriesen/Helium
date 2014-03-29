@@ -115,7 +115,7 @@ class HeliumView
                         className = 'helium status-notice'
 
                         @messagePanel.add(
-                            new LineMessageView { line, col, message, preview, className }
+                            new LineMessageView { line, col, fileName, message, preview, className }
                         )
 
                         content.map (m) => @messagePanel.add(new PlainMessageView { message: m, className: 'helium error-details' })
@@ -125,8 +125,17 @@ class HeliumView
                         )
 
                     else
-                        @messagePanel.append.message("#{line}:#{col} of #{fileName}", 'helium status-notice')
-                        content.map (m) -> @messagePanel.append.message(m, 'helium error-details')
+                        @messagePanel.add(
+                            new LineMessageView
+                                line: line
+                                character: col
+                                fileName: fileName
+                                message: type
+                                # message: "#{line}:#{col} of #{fileName}"
+                                className: 'helium status-notice'
+                        )
+
+                        content.map (m) => @messagePanel.add(new PlainMessageView {message: m, className: 'helium error-details'})
 
     clear: (editorView) ->
         @messagePanel?.detach()

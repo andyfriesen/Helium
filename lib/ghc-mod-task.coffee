@@ -29,6 +29,9 @@ module.exports =
                         [_, fn, line, col, warning, content] = matches
                         if fn == @tempFile
                             fn = fileName
+                        else
+                            fn = path.join(path.dirname(fileName), fn)
+
                         type = if warning.length then 'warning' else 'error'
                         pos = [parseInt(line, 10), parseInt(col, 10)]
 
