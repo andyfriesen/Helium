@@ -13,7 +13,6 @@ class HeliumView
     constructor: (serializeState, ghcModTask) ->
         @ghcModTask = ghcModTask
         @messagePanel = null
-        atom.workspaceView.command 'helium:check', => @check()
         atom.workspaceView.command 'helium:insert-type', => @insertType()
 
     insertType: ->
@@ -59,62 +58,3 @@ class HeliumView
                         editor.insertNewline()
                         editor.deleteLine()
                         cursor.setBufferPosition(new Point(pos.row + 1, pos.col))
-
-    check: ->
-        editor = atom.workspace.getActiveEditor()
-        editorView = atom.workspaceView.getActiveView()
-        fileName = editor?.getPath()
-
-        if fileName? and editor? and editorView?
-            @clear(editorView)
-
-            @messagePanel?.detach()
-            @messagePanel = new MessagePanelView
-                title: 'GHC'
-
-            @messagePanel.attach()
-
-            @ghcModTask.check
-                fileName: fileName
-                sourceCode: editor.getText()
-                onMessage: (message) =>
-                    console.log "onMessage", message
-                    {type, content, fileName} = message
-                    [line, col] = message.pos
-
-                    if message.fileName == editor.getPath()
-                        range = [[line - 1, 0], [line - 1, editor.lineLengthForBufferRow(line - 1)]]
-                        preview = editor.getTextInRange(range)
-
-                        message = type
-                        className = 'helium status-notice'
-
-                        @messagePanel.add(
-                            new LineMessageView { line, col, fileName, message, preview, className }
-                        )
-
-                        content.map (m) => @messagePanel.add(new PlainMessageView { message: m, className: 'helium error-details' })
-
-                        editorView.lineElementForScreenRow(line - 1).addClass(
-                            if type == 'error' then 'helium-error' else 'helium-warning'
-                        )
-
-                    else
-                        @messagePanel.add(
-                            new LineMessageView
-                                line: line
-                                character: col
-                                fileName: fileName
-                                message: type
-                                # message: "#{line}:#{col} of #{fileName}"
-                                className: 'helium status-notice'
-                        )
-
-                        content.map (m) => @messagePanel.add(new PlainMessageView {message: m, className: 'helium error-details'})
-
-    clear: (editorView) ->
-        @messagePanel?.detach()
-        @messagePanel = null
-
-        editorView.find('.helium-error').removeClass('helium-error')
-        editorView.find('.helium-warning').removeClass('helium-warning')
