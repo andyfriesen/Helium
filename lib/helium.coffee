@@ -7,9 +7,15 @@
 , LineMessageView
 } = require 'atom-message-panel'
 
+path = require 'path'
+
+CompilerMessageView = require './compiler-message-view'
 ImportView  = require './import-view'
 GhcModTask  = require './ghc-mod-task'
 ViewManager = require './view-manager'
+
+{ findEditor
+} = require './util'
 
 module.exports =
     messagePanel: null
@@ -52,37 +58,35 @@ module.exports =
                 onMessage: (message) =>
                     console.log "onMessage", message
                     {type, content, fileName} = message
-                    [line, col] = message.pos
+                    [line, column] = message.pos
+                    displayFileName = path.relative(atom.project.getPath(), fileName)
+
+                    preview = ''
+                    findEditor message.fileName, (pane, index, item) =>
+                        range = [[line - 1, 0], [line - 1, item.lineLengthForBufferRow(line - 1)]]
+                        preview = item.getTextInRange(range)
 
                     if message.fileName == editor.getPath()
-                        range = [[line - 1, 0], [line - 1, editor.lineLengthForBufferRow(line - 1)]]
-                        preview = editor.getTextInRange(range)
-
-                        message = type
-                        className = 'helium status-notice'
-
-                        @messagePanel.add(
-                            new LineMessageView { line, col, fileName, message, preview, className }
-                        )
-
-                        content.map (m) => @messagePanel.add(new PlainMessageView { message: m, className: 'helium error-details' })
-
                         editorView.lineElementForScreenRow(line - 1).addClass(
                             if type == 'error' then 'helium-error' else 'helium-warning'
                         )
 
-                    else
-                        @messagePanel.add(
-                            new LineMessageView
-                                line: line
-                                character: col
-                                fileName: fileName
-                                message: type
-                                # message: "#{line}:#{col} of #{fileName}"
-                                className: 'helium status-notice'
-                        )
+                    @messagePanel.add(
+                        new CompilerMessageView
+                            line: line
+                            column: column
+                            fileName: fileName
+                            displayFileName: displayFileName
+                            message: type
+                            preview: preview
+                            className: 'helium status-notice'
+                    )
 
-                        content.map (m) => @messagePanel.add(new PlainMessageView {message: m, className: 'helium error-details'})
+                    content.map (m) => @messagePanel.add(
+                        new PlainMessageView
+                            message: m
+                            className: 'helium error-details'
+                    )
 
     clear: (editorView) ->
         @messagePanel?.detach()
