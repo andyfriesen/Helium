@@ -50,6 +50,7 @@ module.exports =
             @run
                 command: 'type'
                 args: [@tempFile, moduleName, pos[0] + 1, pos[1] + 1]
+                cwd: path.dirname(fileName)
                 onMessage: (line) =>
                     if matches = /(\d+) (\d+) (\d+) (\d+) "([^"]+)"/.exec(line)
                         [_, startLine, startCol, endLine, endCol, type] = matches

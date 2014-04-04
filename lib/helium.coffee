@@ -4,7 +4,6 @@
 
 { MessagePanelView
 , PlainMessageView
-, LineMessageView
 } = require 'atom-message-panel'
 
 path = require 'path'
