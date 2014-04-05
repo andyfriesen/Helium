@@ -6,6 +6,25 @@ Parser            = require './parse'
 
 GHC_MOD_BIN = 'ghc-mod'
 
+ghcmod = null
+
+getGhcMod = ->
+    if null != ghcmod
+        return ghcmod
+
+    paths = process.env.PATH.split(':')
+    if process.platform == 'darwin'
+        paths.unshift(path.join(process.env.HOME, 'Library/Haskell/bin'))
+
+    for p in paths
+        candidate = path.join(p, 'ghc-mod')
+        if fs.existsSync(candidate)
+            ghcmod = candidate
+            return ghcmod
+
+    console.error("Could not find ghc-mod!  Paths searched:", paths)
+    throw "Could not find ghc-mod!"
+
 module.exports =
     class GhcModTask
         constructor: ({bp, fsmodule, tempmodule})->
@@ -89,7 +108,7 @@ module.exports =
             @currentRequest = {onMessage, command, args}
 
             bp_args =
-                command: GHC_MOD_BIN
+                command: getGhcMod()
                 args: cmdArgs
                 options: options
                 stdout: (line) => @stdout(onMessage, line)
