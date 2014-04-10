@@ -16,6 +16,13 @@ It can also fill in type annotations sometimes with `helium:insert-type`:
 You can also use the `helium:insert-import` command to insert an import into the top of the current document without
 losing your current place.
 
+# New in 0.2
+
+* helium:insert-import can insert an import at the top of the currently open document.
+* helium:check works on Literate Haskell.
+* heilum:check does a better job of displaying errors that occur in files imported by the checked file.
+* Do a better job of finding ghc-mod and running it from the correct working directory.
+
 # Status
 
 This project is very roughshod right now.  It is simultaneously a work in progress and a sort of dumping ground for me
