@@ -1,7 +1,7 @@
 {
   "name": "helium",
   "main": "./lib/helium",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Intelligent Haskell Hacking",
   "activationEvents": [
     "helium:check",
