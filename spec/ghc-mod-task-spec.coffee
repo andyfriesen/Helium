@@ -3,7 +3,8 @@ GhcModTask = require '../lib/ghc-mod-task'
 class FakeBufferedProcess
     @allInstances: []
 
-    constructor: ({stdout, exit}) ->
+    constructor: ({args, stdout, exit}) ->
+        @args = args
         @stdout = stdout
         @exit = exit
         FakeBufferedProcess.allInstances.push(this)
@@ -21,6 +22,16 @@ class FakeFs
     @closeSync: () ->
     @unlinkSync: () ->
 
+class FakeAtomConfig
+    constructor: () ->
+        @keys = {}
+
+    get: (key) ->
+        return @keys[key]
+
+    set: (key, value) ->
+        @keys[key] = value
+
 describe "GhcModTask", ->
     messages = []
 
@@ -31,10 +42,30 @@ describe "GhcModTask", ->
         messages.splice(0)
         FakeBufferedProcess.allInstances.splice(0)
 
-    task = new GhcModTask
-        bp: FakeBufferedProcess
-        fsmodule: FakeFs
-        tempmodule: FakeTemp
+    atomconfig = null
+    task = null
+
+    beforeEach ->
+        atomconfig = new FakeAtomConfig
+
+        task = new GhcModTask
+            bp: FakeBufferedProcess
+            fsmodule: FakeFs
+            tempmodule: FakeTemp
+            atomconfig: atomconfig
+
+    describe "config", ->
+        it "passes the contents of the helium.ghc_mod_options config variable on to ghc-mod", ->
+            atomconfig.set "helium.ghc_mod_options", "-g -w"
+
+            task.check
+                onMessage: onMessage
+                fileName: 'TinyTree.hs'
+                sourceCode: 'blah'
+
+            [process] = FakeBufferedProcess.allInstances
+
+            expect(process.args).toEqual ['check', 'goobl', '-g', '-w']
 
     describe "check", ->
         process = null

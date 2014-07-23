@@ -27,10 +27,11 @@ getGhcMod = ->
 
 module.exports =
     class GhcModTask
-        constructor: ({bp, fsmodule, tempmodule})->
+        constructor: ({bp, fsmodule, tempmodule, atomconfig})->
             @BufferedProcess = bp ? BufferedProcess
             @fs = fsmodule ? fs
             @temp = tempmodule ? temp
+            @atomconfig = atomconfig ? atom.config
             @onMessage = null
             @queuedRequest = null
             @bp = null
@@ -100,6 +101,11 @@ module.exports =
             options = if cwd then { cwd: cwd } else {}
             cmdArgs = args.slice(0)
             cmdArgs.unshift(command)
+
+            extraArgs = @atomconfig.get 'helium.ghc_mod_options'
+
+            if extraArgs?
+                cmdArgs = cmdArgs.concat(extraArgs.split ' ')
 
             if @bp?
                 @queuedRequest = {onMessage, command, args}
