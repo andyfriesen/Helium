@@ -16,6 +16,9 @@ ViewManager = require './view-manager'
 { findEditor
 } = require './util'
 
+isReactEditor = (editorView) ->
+    return !editorView.lineElementForScreenRow
+
 module.exports =
     messagePanel: null
     importViewManager: null
@@ -25,6 +28,8 @@ module.exports =
 
         @importViewManager = new ViewManager (editor) => new ImportView(@ghcModTask, editor)
         @importViewManager.activate()
+
+        @decorations = []
 
         atom.workspaceView.command 'helium:check', => @check()
         atom.workspaceView.command 'helium:get-type', => @getTypeOfThingAtCursor()
@@ -66,9 +71,18 @@ module.exports =
                         preview = item.getTextInRange(range)
 
                     if message.fileName == editor.getPath()
-                        editorView.lineElementForScreenRow(line - 1).addClass(
-                            if type == 'error' then 'helium-error' else 'helium-warning'
-                        )
+                        # Temporary hack until the Atom team decides whether to keep the React editor.
+                        if isReactEditor editorView
+                            textBuffer = editor.getBuffer()
+                            marker = textBuffer.markRange [[line - 1, 0], [line - 1, textBuffer.lineLengthForRow line - 1]]
+                            @decorations.push editor.decorateMarker(marker, {
+                                'type': 'line',
+                                'class': if type == 'error' then 'helium-error' else 'helium-warning'
+                            })
+                        else
+                            editorView.lineElementForScreenRow(line - 1).addClass(
+                                if type == 'error' then 'helium-error' else 'helium-warning'
+                            )
 
                     @messagePanel.add(
                         new CompilerMessageView
@@ -91,8 +105,13 @@ module.exports =
         @messagePanel?.detach()
         @messagePanel = null
 
-        editorView.find('.helium-error').removeClass('helium-error')
-        editorView.find('.helium-warning').removeClass('helium-warning')
+        if isReactEditor editorView
+            for d in @decorations
+                d.destroy()
+            @decorations.splice(0)
+        else
+            editorView.find('.helium-error').removeClass('helium-error')
+            editorView.find('.helium-warning').removeClass('helium-warning')
 
     getTypeOfThingAtCursor: ->
         editor = atom.workspace.getActiveEditor()
