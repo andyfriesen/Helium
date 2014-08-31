@@ -3,6 +3,8 @@ path              = require 'path'
 fs                = require 'fs'
 temp              = require 'temp'
 Parser            = require './parse'
+{isSamePath}      = require './util'
+
 
 GHC_MOD_BIN = 'ghc-mod'
 
@@ -50,9 +52,9 @@ module.exports =
                 args: [@tempFile]
                 cwd: path.dirname(fileName)
                 onMessage: (line) =>
-                    if matches = /([^:]+):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
-                        [_, fn, line, col, warning, content] = matches
-                        if fn == @tempFile
+                    if matches = /((\w:\\)?[^:]+):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
+                        [_, fn, _driveSpec, line, col, warning, content] = matches
+                        if isSamePath(fn, @tempFile)
                             fn = fileName
                         else
                             fn = path.join(path.dirname(fileName), fn)
