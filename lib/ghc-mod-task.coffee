@@ -12,12 +12,16 @@ getGhcMod = ->
     if null != ghcmod
         return ghcmod
 
-    paths = process.env.PATH.split(':')
+    paths = process.env.PATH.split(path.delimiter)
     if process.platform == 'darwin'
         paths.unshift(path.join(process.env.HOME, 'Library/Haskell/bin'))
 
+    suffix = ''
+    if process.platform == 'win32'
+        suffix = '.exe'
+
     for p in paths
-        candidate = path.join(p, 'ghc-mod')
+        candidate = path.join(p, 'ghc-mod' + suffix)
         if fs.existsSync(candidate)
             ghcmod = candidate
             return ghcmod
