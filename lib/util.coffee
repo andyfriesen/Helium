@@ -7,3 +7,8 @@ module.exports =
                     onFound(pane, index, item)
 
         onNotFound?()
+
+    isSamePath: (a, b) ->
+        if process.platform == 'win32'
+            a.toLowerCase() == b.toLowerCase()
+        a == b

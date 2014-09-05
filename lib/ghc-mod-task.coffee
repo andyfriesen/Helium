@@ -3,6 +3,8 @@ path              = require 'path'
 fs                = require 'fs'
 temp              = require 'temp'
 Parser            = require './parse'
+{isSamePath}      = require './util'
+
 
 GHC_MOD_BIN = 'ghc-mod'
 
@@ -12,12 +14,16 @@ getGhcMod = ->
     if null != ghcmod
         return ghcmod
 
-    paths = process.env.PATH.split(':')
+    paths = process.env.PATH.split(path.delimiter)
     if process.platform == 'darwin'
         paths.unshift(path.join(process.env.HOME, 'Library/Haskell/bin'))
 
+    suffix = ''
+    if process.platform == 'win32'
+        suffix = '.exe'
+
     for p in paths
-        candidate = path.join(p, 'ghc-mod')
+        candidate = path.join(p, 'ghc-mod' + suffix)
         if fs.existsSync(candidate)
             ghcmod = candidate
             return ghcmod
@@ -46,9 +52,9 @@ module.exports =
                 args: [@tempFile]
                 cwd: path.dirname(fileName)
                 onMessage: (line) =>
-                    if matches = /([^:]+):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
-                        [_, fn, line, col, warning, content] = matches
-                        if fn == @tempFile
+                    if matches = /((\w:\\)?[^:]+):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
+                        [_, fn, _driveSpec, line, col, warning, content] = matches
+                        if isSamePath(fn, @tempFile)
                             fn = fileName
                         else
                             fn = path.join(path.dirname(fileName), fn)
