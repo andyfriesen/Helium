@@ -1,27 +1,29 @@
-{$$, Point, SelectListView} = require 'atom'
+{Point, workspaceView} = require 'atom'
+{$$, SelectListView} = require 'atom-space-pen-views'
 Parser = require './parse'
 
 module.exports =
 class ImportView extends SelectListView
-    initialize: (ghcModTask, editorView) ->
+    initialize: (ghcModTask, textEditor) ->
         super
 
         @addClass 'autocomplete popover-list'
 
         @ghcModTask = ghcModTask
-        @editorView = editorView
-        @editor = editorView.getEditor()
+        @textEditor = textEditor
+        # @editor = textEditor.getEditor()
 
-        @editorView.command 'helium:insert-import', =>
-            if @hasParent()
-                @cancel()
-            else
-                @attach()
+        # @textEditor.command 'helium:insert-import', =>
+        #     if @hasParent()
+        #         @cancel()
+        #     else
+        #         @attach()
 
     attach: ->
-        @editor.beginTransaction()
-        @editorView.appendToLinesView(this)
-        @focusFilterEditor()
+        workspaceView.append(this)
+        # @editor.beginTransaction()
+        # @textEditor.appendToLinesView(this)
+        # @focusFilterEditor()
         @computeImports()
 
     viewForItem: (item) ->
@@ -37,8 +39,7 @@ class ImportView extends SelectListView
 
     confirmed: (item) ->
         @cancel()
-        cursor = @editor.getCursor()
-        pos = cursor.getBufferPosition()
+        pos = @textEditor.getCursorBufferPosition()
 
         p = new Parser(@editor.getText())
         d = p.moduleDecl()
@@ -49,11 +50,13 @@ class ImportView extends SelectListView
             p.eatWhitespace()
             position = [p.line, 0]
 
-        cursor.setBufferPosition(position)
+        # cursor.setBufferPosition(position)
+        @textEditor.setCursorBufferPosition(position)
 
-        @editor.insertText("import " + item + '\n')
-        cursor.setBufferPosition(new Point(pos.row + 1, pos.column))
-        @editor.commitTransaction()
+        @textEditor.insertText("import " + item + '\n')
+        # cursor.setBufferPosition(new Point(pos.row + 1, pos.column))
+        @textEditor.setCursorBufferPosition(new Point(pos.row + 1, pos.column))
+        # @editor.commitTransaction()
 
     selectNextItemView: ->
         super

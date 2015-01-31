@@ -8,7 +8,7 @@ class ViewManager
         @subscription = null
         @views = []
 
-    activate: (state) ->
+    activate: ->
         @subscription = atom.workspaceView.eachEditorView (editor) =>
             view = @factory(editor)
             editor.on 'editor:will-be-removed', =>

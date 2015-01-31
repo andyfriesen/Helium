@@ -1,6 +1,5 @@
-{ Point
-, View
-} = require 'atom'
+{ Point } = require 'atom'
+{ View } = require 'atom-space-pen-views'
 
 { MessagePanelView
 , PlainMessageView
@@ -16,9 +15,6 @@ ViewManager = require './view-manager'
 { findEditor
 } = require './util'
 
-isReactEditor = (editorView) ->
-    return !editorView.lineElementForScreenRow
-
 module.exports =
     messagePanel: null
     importViewManager: null
@@ -26,14 +22,15 @@ module.exports =
     activate: (state) ->
         @ghcModTask = new GhcModTask({})
 
-        @importViewManager = new ViewManager (editor) => new ImportView(@ghcModTask, editor)
-        @importViewManager.activate()
+        atom.workspace.observeTextEditors(
+            (editor) => new ImportView(@ghcModTask, editor)
+        )
 
-        @decorations = []
+        @markers = []
 
-        atom.workspaceView.command 'helium:check', => @check()
-        atom.workspaceView.command 'helium:get-type', => @getTypeOfThingAtCursor()
-        atom.workspaceView.command 'helium:insert-type', => @insertType()
+        atom.commands.add 'atom-workspace', 'helium:check', => @check()
+        atom.commands.add 'atom-workspace', 'helium:get-type', => @getTypeOfThingAtCursor()
+        atom.commands.add 'atom-workspace', 'helium:insert-type', => @insertType()
 
     deactivate: ->
         @heliumView.destroy()
@@ -43,82 +40,76 @@ module.exports =
         heliumViewState: @heliumView.serialize()
 
     check: ->
-        editor = atom.workspace.getActiveEditor()
-        editorView = atom.workspaceView.getActiveView()
+        editor = atom.workspace.getActiveTextEditor()
         fileName = editor?.getPath()
 
-        if fileName? and editor? and editorView?
-            @clear(editorView)
+        if not fileName? or not editor?
+            return
 
-            @messagePanel?.detach()
-            @messagePanel = new MessagePanelView
-                title: 'GHC'
+        @clear()
 
-            @messagePanel.attach()
+        @messagePanel?.detach()
+        @messagePanel = new MessagePanelView
+            title: 'GHC'
 
-            @ghcModTask.check
-                fileName: fileName
-                sourceCode: editor.getText()
-                onMessage: (message) =>
-                    console.log "onMessage", message
-                    {type, content, fileName} = message
-                    [line, column] = message.pos
-                    displayFileName = path.relative(atom.project.getPath(), fileName)
+        @messagePanel.attach()
 
-                    preview = ''
-                    findEditor message.fileName, (pane, index, item) =>
-                        range = [[line - 1, 0], [line - 1, item.lineLengthForBufferRow(line - 1)]]
-                        preview = item.getTextInRange(range)
+        @ghcModTask.check
+            fileName: fileName
+            sourceCode: editor.getText()
+            onMessage: (message) =>
+                console.log "onMessage", message
+                {type, content, fileName} = message
+                [line, column] = message.pos
+                bufferLine = line - 1
+                bufferCol = column - 1
+                displayFileName = path.relative(atom.project.getPath(), fileName)
 
-                    if message.fileName == editor.getPath()
-                        # Temporary hack until the Atom team decides whether to keep the React editor.
-                        if isReactEditor editorView
-                            textBuffer = editor.getBuffer()
-                            marker = textBuffer.markRange [[line - 1, 0], [line - 1, textBuffer.lineLengthForRow line - 1]]
-                            @decorations.push editor.decorateMarker(marker, {
-                                'type': 'line',
-                                'class': if type == 'error' then 'helium-error' else 'helium-warning'
-                            })
-                        else
-                            editorView.lineElementForScreenRow(line - 1).addClass(
-                                if type == 'error' then 'helium-error' else 'helium-warning'
-                            )
+                preview = ''
+                findEditor message.fileName, (pane, index, item) =>
+                    range = [[bufferLine, 0], [bufferLine, item.lineTextForBufferRow(bufferLine).length]]
+                    preview = item.getTextInRange(range)
 
-                    @messagePanel.add(
-                        new CompilerMessageView
-                            line: line
-                            column: column
-                            fileName: fileName
-                            displayFileName: displayFileName
-                            message: type
-                            preview: preview
-                            className: 'helium status-notice'
-                    )
+                if message.fileName == editor.getPath()
+                    textBuffer = editor.getBuffer()
+                    marker = editor.markBufferRange [[bufferLine, bufferCol], [bufferLine, textBuffer.lineLengthForRow bufferLine]]
+                    @markers.push(marker)
+                    editor.decorateMarker(marker, {
+                        'type': 'highlight',
+                        'class': if type == 'error' then 'helium-error' else 'helium-warning'
+                    })
 
-                    content.map (m) => @messagePanel.add(
-                        new PlainMessageView
-                            message: m
-                            className: 'helium error-details'
-                    )
+                @messagePanel.add(
+                    new CompilerMessageView
+                        line: line
+                        column: column
+                        fileName: fileName
+                        displayFileName: displayFileName
+                        message: type
+                        preview: preview
+                        className: 'helium status-notice'
+                )
 
-    clear: (editorView) ->
+                content.map (m) => @messagePanel.add(
+                    new PlainMessageView
+                        message: m
+                        className: 'helium error-details'
+                )
+
+    clear: () ->
         @messagePanel?.detach()
         @messagePanel = null
 
-        if isReactEditor editorView
-            for d in @decorations
-                d.destroy()
-            @decorations.splice(0)
-        else
-            editorView.find('.helium-error').removeClass('helium-error')
-            editorView.find('.helium-warning').removeClass('helium-warning')
+        for m in @markers
+            m.destroy()
+        @markers.splice(0)
 
     getTypeOfThingAtCursor: ->
-        editor = atom.workspace.getActiveEditor()
+        editor = atom.workspace.getActiveTextEditor()
         return unless editor?
 
         fileName = editor.getPath()
-        pos = editor.getCursor().getBufferPosition()
+        pos = editor.getLastCursor().getBufferPosition()
 
         gotTheFirstOne = false
 
@@ -148,11 +139,11 @@ module.exports =
                 )
 
     insertType: ->
-        editor = atom.workspace.getActiveEditor()
+        editor = atom.workspace.getActiveTextEditor()
         return unless editor?
 
         fileName = editor.getPath()
-        cursor = editor.getCursor()
+        cursor = editor.getLastCursor()
         pos = cursor.getBufferPosition()
 
         gotFirst = false
@@ -165,9 +156,7 @@ module.exports =
                 return if gotFirst
                 gotFirst = true
 
-                line = editor.getTextInRange(
-                    [[pos.row, 0], [pos.row, editor.lineLengthForBufferRow(pos.row)]]
-                )
+                line = editor.lineTextForBufferRow(pos.row)
 
                 if matches = /^( *)(\w+) *=(.*)$/.exec(line)
                     editor.transact ->

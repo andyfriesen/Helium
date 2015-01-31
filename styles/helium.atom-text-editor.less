@@ -4,8 +4,8 @@
 // for a full listing of what's available.
 @import "ui-variables";
 
-@helium-color-warning: multiply(@background-color-warning, #888);
-@helium-color-error: multiply(@background-color-error, #888);
+@helium-color-warning: multiply(@background-color-warning, #AAA);
+@helium-color-error: multiply(@background-color-error, #AAA);
 
 .helium {
 }
@@ -15,12 +15,12 @@
     margin-bottom: 0;
 }
 
-.helium-warning {
-    background-color: @helium-color-warning;
+.helium-warning .region {
+    border-bottom: 2px dotted @helium-color-warning;
 }
 
-.helium-error {
-    background-color: @helium-color-error;
+.helium-error .region {
+    border-bottom: 2px dotted @helium-color-error;
 }
 
 .helium-typeinfo {

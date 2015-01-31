@@ -15,7 +15,8 @@
     "atom": ">0.50.0"
   },
   "dependencies": {
-    "atom-message-panel": "^1.0.0",
+    "atom-space-pen-views": "^2.0.3",
+    "atom-message-panel": "^1.2.2",
     "temp": "^0.7.0",
     "underscore-plus": "1.x"
   }
