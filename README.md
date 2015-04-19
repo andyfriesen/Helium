@@ -16,6 +16,10 @@ It can also fill in type annotations sometimes with `helium:insert-type`:
 You can also use the `helium:insert-import` command to insert an import into the top of the current document without
 losing your current place.
 
+# New in 0.4
+
+* Updated to work with 0.192.0
+
 # New in 0.3
 
 * I fudged the version on an import.  Fixed.
