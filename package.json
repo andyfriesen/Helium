@@ -1,7 +1,7 @@
 {
   "name": "helium",
   "main": "./lib/helium",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Intelligent Haskell Hacking",
   "activationCommands": {
     "atom-text-editor": [
