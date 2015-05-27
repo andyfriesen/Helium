@@ -41,9 +41,11 @@ module.exports =
 
     check: ->
         editor = atom.workspace.getActiveTextEditor()
-        fileName = editor?.getPath()
+        if not editor?
+            return
 
-        if not fileName? or not editor?
+        fileName = editor?.getPath()
+        if not fileName?
             return
 
         @clear()
@@ -63,14 +65,15 @@ module.exports =
                 [line, column] = message.pos
                 bufferLine = line - 1
                 bufferCol = column - 1
-                displayFileName = path.relative(atom.project.getPath(), fileName)
+                console.log(atom.project.getPaths(), fileName)
+                displayFileName = path.relative(atom.project.getPaths()[0], fileName)
 
                 preview = ''
                 findEditor message.fileName, (pane, index, item) =>
                     range = [[bufferLine, 0], [bufferLine, item.lineTextForBufferRow(bufferLine).length]]
                     preview = item.getTextInRange(range)
 
-                if message.fileName == editor.getPath()
+                if message.fileName == fileName
                     textBuffer = editor.getBuffer()
                     marker = editor.markBufferRange [[bufferLine, bufferCol], [bufferLine, textBuffer.lineLengthForRow bufferLine]]
                     @markers.push(marker)

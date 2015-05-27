@@ -16,15 +16,21 @@ It can also fill in type annotations sometimes with `helium:insert-type`:
 You can also use the `helium:insert-import` command to insert an import into the top of the current document without
 losing your current place.
 
-# New in 0.4
+# Changelog
+
+## 0.5
+
+* Update to work with Atom 1.0
+
+## 0.4
 
 * Updated to work with 0.192.0
 
-# New in 0.3
+## 0.3
 
 * I fudged the version on an import.  Fixed.
 
-# New in 0.2
+## 0.2
 
 * helium:insert-import can insert an import at the top of the currently open document.
 * helium:check works on Literate Haskell.

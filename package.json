@@ -1,18 +1,20 @@
 {
   "name": "helium",
   "main": "./lib/helium",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Intelligent Haskell Hacking",
-  "activationEvents": [
-    "helium:check",
-    "helium:get-type",
-    "helium:insert-type",
-    "helium:insert-import"
-  ],
+  "activationCommands": {
+    "atom-text-editor": [
+      "helium:check",
+      "helium:get-type",
+      "helium:insert-type",
+      "helium:insert-import"
+    ]
+  },
   "repository": "https://github.com/andyfriesen/helium",
   "license": "MIT",
   "engines": {
-    "atom": ">0.50.0"
+    "atom": ">=0.185.0 <2.0.0"
   },
   "dependencies": {
     "atom-space-pen-views": "^2.0.3",
