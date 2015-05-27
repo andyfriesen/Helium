@@ -18,7 +18,7 @@ losing your current place.
 
 # Changelog
 
-## 0.5
+## 0.6.1
 
 * Update to work with Atom 1.0
 
